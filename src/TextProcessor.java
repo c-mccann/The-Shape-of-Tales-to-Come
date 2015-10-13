@@ -1,16 +1,15 @@
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by carlmccann2 on 21/09/15.
  */
 public class TextProcessor {
 
-    public static HashMap<String, HashMap<String,String>> characters = new HashMap<String, HashMap<String,String>>();
-    public static HashMap<String,Integer> characterCount = new HashMap<String,Integer>();
+    private static HashMap<String, HashMap<Integer,String>> characters = new HashMap<String, HashMap<Integer,String>>();
+    private static HashMap<String,Integer> characterCount = new HashMap<String,Integer>();
+    private static String currCharacter;
+    private static String currSentiment;
 
 
     public static boolean newCharacter(String name){
@@ -18,17 +17,14 @@ public class TextProcessor {
 
         name = name.replace(" (V.O.)","");
         if(!characters.containsKey(name) ){
-            characters.put(name, new HashMap<String, String>());
+            characters.put(name, new LinkedHashMap<Integer, String>());
             //characters.get(name).put(wordCount,sentimentpos/neg);
             if(name != null){
                 characterCount.put(name,0);   // linked to character hashmap
             }
-
-
             return true;
         }
         return false;
-
     }
 
     public static String characterTrimmer(String name){
@@ -42,13 +38,12 @@ public class TextProcessor {
         name = name.replaceAll("\\s+.\\*","");
 
         return name;
-
     }
 
     public static String dialogueTrimmer(String dialogue){
         dialogue = dialogue.toLowerCase();
         dialogue = dialogue.replaceAll("\\!|\\,|\\.|\\?|\\*", "");
-        dialogue = dialogue.replaceAll("\\'"," ");//may need to change this due to conjunction/possessive usage
+        //dialogue = dialogue.replaceAll("\\'"," ");//may need to change this due to conjunction/possessive usage
         dialogue = dialogue.trim();
 
         return dialogue;
@@ -56,7 +51,6 @@ public class TextProcessor {
 
     public static String sentimentAnalyser(String word, HashMap sentiment /*, int wordCount*/){
                                                     // searches the sentiment hashmap
-
         String sent = "neutral";
         if(sentiment.containsKey(word) == true){
 
@@ -72,13 +66,43 @@ public class TextProcessor {
         return sent;
     }
 
+    public static void dialogueProcessor(String dialogue,HashMap sentiment) {
+        //to abstract the code within the dialogue if statement
+        int wordCount = characterCount.get(currCharacter);
+        String temp;
+        String[] wordArray = {};
+
+        //System.out.println(count + " Dialogue: " + temp);
+        Arrays.fill(wordArray, null);
+        temp = dialogueTrimmer(dialogue);
+
+        wordArray = temp.split("\\s+");
+        //System.out.println(Arrays.toString(wordArray));
+
+        for (int i = 0; i < wordArray.length; i++) {
+            wordCount++;
+            currSentiment = sentimentAnalyser(wordArray[i], sentiment);
+
+            if (!currSentiment.equals("neutral")) {
+                characters.get(currCharacter).put(wordCount, currSentiment);
+            }
+        }
+        characterCount.put(currCharacter,characterCount.get(currCharacter) + wordArray.length);
+    }
+
+    public static void characterProcessor(String character,int wordCount){
+        //to abstract the code within the character if statement
+        character = characterTrimmer(character);
+        newCharacter(character);
+        currCharacter = character;
+    }
+
+
     public static void scriptReader(String fileName,HashMap sentiment) throws FileNotFoundException{
         System.out.println("Initiating File Reader on: ");
         String filePath = "src/res/";
         filePath += fileName;
         System.out.println(filePath + "\n");
-
-
 
         //wolf format
 //        String dialogue = "\\ {16}.\\w.*";
@@ -88,27 +112,19 @@ public class TextProcessor {
 //        String spokenTo = "\\ {21}[(]to.*";
 //        String description = "\\ {5}.\\w.*";
 
-        //Darko format
+//        //Darko format
         String dialogue = "\\ {25}.\\w.*";
         String character = "\\ {37}.\\w.*";
         String scene = "INT.";
         String spokenTo = "\\ {30}[(]to.*";
         String description = "\\ {15}.\\w.*";
-        //not done yet
+//        //not done yet
         String subScene = "\\d[A-Z].*";
-
-
-
-        String lineType = null;
-
-        String currCharacter = null;
-        String currSentiment = "neutral";
 
         int wordCount = 0;
 
         try {
             BufferedReader rdrr = new BufferedReader(new FileReader(filePath));
-            String[] wordArray = {};
             String temp = rdrr.readLine();
 
             while(temp != null){
@@ -123,74 +139,18 @@ public class TextProcessor {
                     //System.out.println(count + " Description: " + temp);
                 }
                 else if(temp.matches(character)){           //Needs Work
-
                     temp = characterTrimmer(temp);
                     newCharacter(temp);
-
-                    if( temp.matches(currCharacter)){
-
-                        if(characterCount.containsKey(currCharacter)){      // updates overall wordCount for character
-                            characterCount.put(currCharacter, characterCount.get(currCharacter) + wordCount);
-                        }
-                        else{
-                            characterCount.put(currCharacter,wordCount);
-                        }
-
-                        if(characterCount.get(temp) == null){
-                            wordCount = 0;
-                        }
-                        else{
-                            wordCount=characterCount.get(temp); // update wordCount for new current character
-                        }
-
-                    }
-
-                    currCharacter = temp;               // update current character
-
-                    //System.out.println(count + " Character: " + temp);
+                    characterProcessor(temp,wordCount);
                 }
+
                 else if(temp.matches(spokenTo)){
                     //System.out.println(count + " Spoken To: " + temp);
                 }
 
-
                 else if(temp.matches(dialogue)){
                     //System.out.println(count + " Dialogue: " + temp);
-                    Arrays.fill(wordArray, null);
-                    temp = dialogueTrimmer(temp);
-
-                    wordArray = temp.split("\\s+");
-                    //System.out.println(Arrays.toString(wordArray));
-
-                    for (int i = 0; i < wordArray.length; i++) {
-                        wordCount++;
-                        currSentiment = sentimentAnalyser(wordArray[i],sentiment);
-
-
-
-//
-
-                        if(currSentiment != "neutral"){
-
-                            System.out.println();
-                            if(currCharacter.matches("DONNIE")){
-                                if(characterCount.get(currCharacter) < 0){
-                                    // will be testing for negative word position
-                                }
-
-                                System.out.println("Charcount: " +characterCount.get(currCharacter));
-                                System.out.println("currCharacter: " + currCharacter);
-                                System.out.println("HM characterCount: " + characterCount);
-
-                            }
-                            System.out.println();
-
-                            int a = characterCount.get(currCharacter) + i;
-                            characters.get(currCharacter).put(Integer.toString(wordCount), currSentiment);
-
-
-                        }
-                    }
+                    dialogueProcessor(temp,sentiment);
                 }
                 temp = rdrr.readLine();
             }
@@ -205,14 +165,16 @@ public class TextProcessor {
     public static void fileWriter(String character){
 
         try{
-            Writer output = null;
-            File file = new File("src/out/"+character+"-sentiment.csv");
-            output = new BufferedWriter(new FileWriter(file));
 
+            Writer output = null;
+
+            File file = new File("src/out/"+character+"-sentiment.csv");
+
+            output = new BufferedWriter(new FileWriter(file));
             output.append(characterCount.get(character) + ", END\n");
 
-            HashMap<String,String> tHash = characters.get(character);
-            for(String key : tHash.keySet()){
+            HashMap<Integer,String> tHash = characters.get(character);
+            for(Integer key : tHash.keySet()){
                 output.append(key + ", " + tHash.get(key) + "\n");
             }
 
@@ -220,10 +182,11 @@ public class TextProcessor {
             System.out.println(character + " sentiment file has been written");
 
         }catch(Exception e){
-            System.out.println("Could not create file");
+            System.out.println("Error Writing File");
         }
 
     }
+
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         System.out.println("TextProcessor Initiated\n");
@@ -237,12 +200,58 @@ public class TextProcessor {
             //scriptReader("WOWS-Scene9.txt",rl.sentiment);
             //scriptReader("The-Wolf-Of-Wall-Street-Script.txt",rl.sentiment);
             scriptReader("text/Donnie+Darko.txt",rl.sentiment);
+            //scriptReader("Donnie-Darko-sample.txt",rl.sentiment);
             //scriptReader("12-Years-A-Slave.txt",rl.sentiment);
             //scriptReader("10-scenes-100-to-109-WOWS.txt",rl.sentiment);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
-        fileWriter("GRETCHEN");
+
+
+        String tempChars[] = new String[1000];
+        for(String key : characterCount.keySet()){
+            int i = 0;
+            if (characterCount.get(key) == 0){
+                tempChars[i] = key;
+                i++;
+            }
+        }
+        for (int i = 0; i < tempChars.length ; i++) {
+            System.out.println(tempChars[i]);       //null when should be string
+            characterCount.remove(tempChars[i]);            // if not a character(not spoken any words)
+            characters.remove(tempChars[i]);
+        }
+
+        System.out.println(characterCount);
+        System.out.println(characters);
+
+        fileWriter("DONNIE");
+
+        double postest = 0;
+        double negtest = 0;
+
+        for(String value : characters.get("DONNIE").values()){
+            if(value.equals("positive")){
+                postest++;
+            }
+            else{
+                negtest++;
+            }
+        }
+
+        for(String key : characters.keySet()){
+            System.out.println(key);
+        }
+
+        System.out.println();
+        System.out.println("Donnie positive test: " + postest);
+        System.out.println("Donnie negative test: " + negtest);
+        System.out.println(postest/negtest);
+//        fileWriter("ROSE");
+
+
+
+
     }
 }
