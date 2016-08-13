@@ -1,11 +1,15 @@
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import javax.swing.JFrame;
-import org.jfree.chart.*;
-import org.jfree.chart.axis.*;
-import org.jfree.chart.plot.*;
+package simple;
+
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYSplineRenderer;
-import org.jfree.data.xy.*;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class GraphTest {
 
@@ -25,10 +29,9 @@ public class GraphTest {
         XYSeries series = new XYSeries(Title);
         for (int i = 0; i <= 10; i++) {
 
-            if(i > 5){
-                series.add(i,-i);
-            }
-            else{
+            if (i > 5) {
+                series.add(i, -i);
+            } else {
                 series.add(i, i);
             }
 
@@ -41,7 +44,7 @@ public class GraphTest {
         XYSplineRenderer r = new XYSplineRenderer(3);
         XYPlot xyplot = new XYPlot(dataset, domain, range, r);
         JFreeChart chart = new JFreeChart(xyplot);
-        ChartPanel chartPanel = new ChartPanel(chart){
+        ChartPanel chartPanel = new ChartPanel(chart) {
 
             @Override
             public Dimension getPreferredSize() {

@@ -1,3 +1,5 @@
+package simple;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -9,7 +11,7 @@ import java.util.HashMap;
  */
 public class ResourceLoader {
 
-    public static HashMap<String,String> sentiment = new HashMap<String,String>();
+    public static HashMap<String, String> sentiment = new HashMap<String, String>();
 
     public static void sentimentFiller() throws FileNotFoundException {
 
@@ -17,10 +19,10 @@ public class ResourceLoader {
         int pcount = 0, ncount = 0;
         System.out.println("Filling Hashmap with sentiment word list");
         try {
-            BufferedReader rdrr = new BufferedReader(new FileReader("src/res/positive-words.txt"));
+            BufferedReader rdrr = new BufferedReader(new FileReader("src/res/sentimentWords/positive-words.txt"));
 
             String temp = null;
-            for (int i = 0; i < lexiconInfo ; i++) {
+            for (int i = 0; i < lexiconInfo; i++) {
                 temp = rdrr.readLine();
             }
 
@@ -32,7 +34,7 @@ public class ResourceLoader {
                 temp = rdrr.readLine();
             }
 
-            rdrr = new BufferedReader(new FileReader("src/res/negative-words.txt"));
+            rdrr = new BufferedReader(new FileReader("src/res/sentimentWords/negative-words.txt"));
 
 
             for (int i = 0; i < lexiconInfo; i++) {
